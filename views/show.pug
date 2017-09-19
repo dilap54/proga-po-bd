@@ -1,0 +1,16 @@
+extends ./layout
+
+block content
+	div
+		.container
+			h1 Список сотрудников:
+			table
+				tbody
+					each worker in data
+						tr
+							td=worker.fullName
+							td=(worker.sex) ? 'м' : 'ж'
+							- var date = new Date(worker.birthDay);
+							td=date.getDate()+':'+(date.getMonth()+1)+':'+date.getFullYear()
+							td=worker.placeName
+							td=worker.departName
