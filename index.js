@@ -45,6 +45,22 @@ app.get('/show', function(req, res){
 	});
 });
 
+app.get('/table', function(req, res){
+	cadrs.fetchDB((err, result, fields)=>{
+		var data = {
+			title: 'Сотрудники',
+			head: {
+				fullName:'ФИО',
+				birthDay:'Дата рождения',
+				sex: 'Пол',
+				placeName: 'Должность',
+				departName: 'Отдел'
+			},
+			body: result
+		};
+		res.render('table', data);
+	});
+});
 
 app.get('/generateData', function(req,res){
 	generator.generateWorkers(14*7*3, function(err, data){
@@ -54,9 +70,18 @@ app.get('/generateData', function(req,res){
 });
 
 app.get('/departments', function(req, res){
-	generator.GeneratorBD((err, generatordb)=>{
-		res.end(err+JSON.stringify(generatordb.getDepartments()));
-	})
+	cadrs.fetchDepartments((err, result, fields)=>{
+		console.log(result);
+		var data = {
+			title: 'Отделы',
+			head: {
+				departmentId:'ID',
+				name:'Название'
+			},
+			body: result
+		};
+		res.render('table', data);
+	});
 });
 
 app.get('/workplaces', function(req, res){

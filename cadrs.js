@@ -215,11 +215,22 @@ function fetchDB(callback){
             (SELECT name as departName, departmentId FROM `department`) as depart\
         ON place.departmentId = depart.departmentId';
     pool.query(query, (err, result, fields)=>{
-        callback(err, result);
+        callback(err, result, fields);
     });
+}
+
+function fetchDepartments(callback){
+    query = 'SELECT * FROM `department`';
+    pool.query(query, callback);
+}
+
+function fetchWorkplaces(callback){
+
 }
 
 exports.dropDB = dropDB;
 exports.createDB = createDB;
 exports.generateDB = generateDB;
 exports.fetchDB = fetchDB;
+exports.fetchDepartments = fetchDepartments;
+
