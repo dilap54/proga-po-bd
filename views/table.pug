@@ -1,0 +1,19 @@
+extends ./layout
+
+block title
+	title=title
+
+block content
+	div
+		.container
+			h1=title
+			table
+				thead
+					tr
+						each val in head
+							th=val
+				tbody
+					each worker in body
+						tr
+							each val,key in head
+								td=worker[key]
