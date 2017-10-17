@@ -123,8 +123,9 @@ function GeneratorBD(callback){
 
     this.genWorkplaces = function(){
         var workplaces = [];
-        var deps = this.getDepartments();
-        var works = this.getWorkplaces();
+        var deps = this.getDepartments();//Отделы
+        var works = this.getWorkplaces();//Должности
+        //Для каждого отдела создать 1..5 должностей
         for (var i=1; i<=deps.length; i++){
             for (var y=0; y<getRandomInt(1, 5); y++){
                 workplaces.push({

@@ -40,8 +40,14 @@ app.get('/generateDB', function(req, res){ //TODO: заменить на POST
 
 app.get('/show', function(req, res){
 	cadrs.fetchDB((err, result)=>{
-		console.log(result);
-		res.render('show', {data: result});
+		if (err){
+			console.error('Ошибка получения данных с базы', err);
+			res.end(end);
+		}
+		else{
+			console.log(result);
+			res.render('show', {data: result});
+		}
 	});
 });
 
