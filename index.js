@@ -53,12 +53,13 @@ app.get('/show', function(req, res){
 
 app.get('/table', function(req, res){
 	cadrs.fetchDB((err, result, fields)=>{
+		console.log(result);
 		var data = {
 			title: 'Сотрудники',
 			head: {
 				fullName:'ФИО',
 				birthDay:'Дата рождения',
-				sex: 'Пол',
+				gender: 'Пол',
 				placeName: 'Должность',
 				departName: 'Отдел'
 			},
@@ -68,32 +69,26 @@ app.get('/table', function(req, res){
 	});
 });
 
-app.get('/generateData', function(req,res){
-	generator.generateWorkers(14*7*3, function(err, data){
-		console.log(err, data);
-		res.end(err+JSON.stringify(data));
-	})
+app.get('/workers', function(req, res){
+	cadrs.fetchWorkers((err, result)=>{
+		if (err){
+			console.error(err);
+			res.status(500).end();
+		}
+		var data= {
+			workers: result
+		};
+		res.render('workers', data);
+	});
 });
 
 app.get('/departments', function(req, res){
 	cadrs.fetchDepartments((err, result, fields)=>{
-		console.log(result);
 		var data = {
-			title: 'Отделы',
-			head: {
-				departmentId:'ID',
-				name:'Название'
-			},
-			body: result
+			departments: result
 		};
-		res.render('table', data);
+		res.render('departments', data);
 	});
-});
-
-app.get('/workplaces', function(req, res){
-	generator.GeneratorBD((err, generatordb)=>{
-		res.end(err+JSON.stringify(generatordb.getWorkplaces()));
-	})
 });
 
 app.listen(18092, function () {

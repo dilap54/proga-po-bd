@@ -95,22 +95,6 @@ function generateDB(callback){
             callback(err);
         }
         else{
-            /*
-            for (var i=0; i<14*7*3; i++){
-                workers.push(generatordb.genWorker());
-            }
-            async.each(workers, (worker, callback)=>{
-
-            }, 
-            (err, result)=>{
-                if (err){
-                    callback(err);
-                }
-                else{
-                    callback(null, result);
-                }
-            })
-            */
             var departments = generatordb.getDepartments();
             var workplaces = generatordb.genWorkplaces();
             var workers = [];
@@ -164,18 +148,51 @@ function fetchDB(callback){
     });
 }
 
-function fetchDepartments(callback){
-    var query = 'SELECT * FROM `department`';
-    pool.query(query, callback);
+function fetchWorkers(callback){
+    var query = 'SELECT * FROM `workers`';
+    pool.query(query, (err, result, fields)=>{
+        callback(err, result, fields);
+    })
 }
-
-function fetchWorkplaces(callback){
-
+function fetchWorkersHistory(callback){
+    var query = 'SELECT * FROM `workersHistory`';
+    pool.query(query, (err, result, fields)=>{
+        callback(err, result, fields);
+    })
+}
+function fetchDepartments(callback){
+    var query = 'SELECT * FROM `departments`';
+    pool.query(query, (err, result, fields)=>{
+        callback(err, result, fields);
+    })
+}
+function fetchPositions(callback){
+    var query = 'SELECT * FROM `workers`';
+    pool.query(query, (err, result, fields)=>{
+        callback(err, result, fields);
+    })
+}
+function fetchBonuses(callback){
+    var query = 'SELECT * FROM `bonuses`';
+    pool.query(query, (err, result, fields)=>{
+        callback(err, result, fields);
+    })
+}
+function fetchWorkersBonuses(callback){
+    var query = 'SELECT * FROM `workersBonuses`';
+    pool.query(query, (err, result, fields)=>{
+        callback(err, result, fields);
+    })
 }
 
 exports.dropDB = dropDB;
 exports.createDB = createDB;
 exports.generateDB = generateDB;
 exports.fetchDB = fetchDB;
-exports.fetchDepartments = fetchDepartments;
 
+exports.fetchWorkers = fetchWorkers;
+exports.fetchWorkersHistory = fetchWorkersHistory;
+exports.fetchDepartments = fetchDepartments;
+exports.fetchPositions = fetchPositions;
+exports.fetchBonuses = fetchBonuses;
+exports.fetchWorkersBonuses = fetchWorkersBonuses;
