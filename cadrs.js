@@ -3,6 +3,26 @@ const fs = require('fs');
 const async = require('async');
 const generator = require('./generator.js');
 
+
+function buildUpdate(table, set, where){
+    var setArr = []
+    for (key in set){
+        if (set[key] !== undefined){
+            setArr.push('`'+key+'` = '+pool.escape(set[key]));
+        }
+    }
+    var whereArr = []
+    for (key in where){
+        if (where[key] !== undefined){
+            whereArr.push('`'+key+'` = '+pool.escape(where[key]));
+        }
+    }
+    console.log('setArr', setArr.join(', '));
+    console.log('whereArr', whereArr.join('AND'));
+    return 'UPDATE `'+table+'` SET '+setArr.join(', ')+' WHERE '+whereArr.join('AND');
+}
+
+
 var tables = [
     {
         name: 'workers',
@@ -143,46 +163,78 @@ function fetchDB(callback){
         LEFT OUTER JOIN \
             (SELECT name as departName, departmentId FROM `departments`) as depart\
         ON place.departmentId = depart.departmentId';
-    pool.query(query, (err, result, fields)=>{
-        callback(err, result, fields);
-    });
+    pool.query(query, callback);
 }
 
 function fetchWorkers(callback){
     var query = 'SELECT * FROM `workers`';
-    pool.query(query, (err, result, fields)=>{
-        callback(err, result, fields);
-    })
+    pool.query(query, callback)
 }
+
 function fetchWorkersHistory(callback){
     var query = 'SELECT * FROM `workersHistory`';
-    pool.query(query, (err, result, fields)=>{
-        callback(err, result, fields);
-    })
+    pool.query(query, callback)
 }
+
 function fetchDepartments(callback){
     var query = 'SELECT * FROM `departments`';
-    pool.query(query, (err, result, fields)=>{
-        callback(err, result, fields);
-    })
+    pool.query(query, callback)
 }
+function addDepartment(department, callback){
+    pool.query('INSERT INTO departments (`name`)  VALUES(?);', department.name, callback);
+}
+function updateDepartment(department, callback){
+    console.log(department);
+    var query = buildUpdate('departments', {
+        name: department.name, 
+        abolished: department.abolished
+    }, {
+        departmentId: department.departmentId
+    });
+    console.log(query);
+    pool.query(query, callback);
+}
+
 function fetchPositions(callback){
-    var query = 'SELECT * FROM `workers`';
-    pool.query(query, (err, result, fields)=>{
-        callback(err, result, fields);
-    })
+    var query = 'SELECT * FROM `positions`';
+    pool.query(query, callback)
 }
+function getPosition(positionId, callback){
+    pool.query(
+        'SELECT * FROM `positions` as positions\
+        JOIN (\
+            SELECT departmentId, name as departmentName FROM `departments`\
+        ) as departments\
+        ON	positions.departmentId = departments.departmentId\
+        WHERE positions.positionId = ?',
+        positionId,
+        callback
+    )
+}
+function setPosition(position, callback){
+    if (position.positionId){
+        console.log(position);
+        var query = buildUpdate('positions',{
+            name: position.name, 
+            abolished: position.abolished
+        }, {
+            positionId: position.positionId
+        });
+        pool.query(query, callback);
+    }
+    else{
+        pool.query('INSERT INTO positions (`name`, `abolished`, `departmentId`) VALUES (?,?,?)', [position.name, position.abolished, position.departmentId], callback);
+    }
+}
+
 function fetchBonuses(callback){
     var query = 'SELECT * FROM `bonuses`';
-    pool.query(query, (err, result, fields)=>{
-        callback(err, result, fields);
-    })
+    pool.query(query, callback)
 }
+
 function fetchWorkersBonuses(callback){
     var query = 'SELECT * FROM `workersBonuses`';
-    pool.query(query, (err, result, fields)=>{
-        callback(err, result, fields);
-    })
+    pool.query(query, callback)
 }
 
 exports.dropDB = dropDB;
@@ -191,8 +243,18 @@ exports.generateDB = generateDB;
 exports.fetchDB = fetchDB;
 
 exports.fetchWorkers = fetchWorkers;
+
 exports.fetchWorkersHistory = fetchWorkersHistory;
+
 exports.fetchDepartments = fetchDepartments;
+exports.addDepartment = addDepartment;
+exports.updateDepartment = updateDepartment;
+
 exports.fetchPositions = fetchPositions;
+exports.getPosition = getPosition;
+exports.setPosition = setPosition;
+
 exports.fetchBonuses = fetchBonuses;
+
 exports.fetchWorkersBonuses = fetchWorkersBonuses;
+
