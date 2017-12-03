@@ -1,14 +1,13 @@
 extends ./layout
 
 block content
-	div
-		.container
-			a(href="/table") Сводная таблица
-			br
-			a(href="/workers") Сотрудники
-			br
-			a(href="/departments") Отделы
-			br
-			a(href="/positions") Должности
-			br
-			a(href="/bonuses") Бонусы
+	.container-fluid
+		.row
+			.col-md-6.col-lg-4.col-xl-3.mt-4
+				a.overview(href="/workers") Сотрудники
+			.col-md-6.col-lg-4.col-xl-3.mt-4
+				a.overview(href="/departments") Отделы
+			.col-md-6.col-lg-4.col-xl-3.mt-4
+				a.overview(href="/positions") Должности
+			.col-md-6.col-lg-4.col-xl-3.mt-4
+				a.overview(href="/bonuses") Бонусы

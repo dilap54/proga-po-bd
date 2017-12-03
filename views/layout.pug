@@ -4,13 +4,15 @@ html
 			title Прога по БД
 		meta(charset="utf8")
 		link(rel="stylesheet" href="/css/bootstrap.min.css")
+		link(rel="stylesheet" href="/css/styles.css")
 	body
-		.container
-			a(href='/')
-				h1 Отдел кадров
+		.container-fluid.mb-4
+			.title
+				a(href='/')
+					h1 Отдел кадров
 		if (error)
 			div
-				.container.error=error
+				.container-fluid.error=error
 		block content
 		script(src="/js/jquery-3.2.1.min.js")
 		script(src="/js/popper.min.js")

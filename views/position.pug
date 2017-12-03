@@ -1,0 +1,24 @@
+extends ./layout
+
+block title
+	title Должность
+block content
+	div
+		.container
+			h2 Должность
+			form(action='/postposition'+(position?'/'+position.positionId:''), method='GET')
+				if (position && position.positionId)
+					label(for='positionId') Id должности
+					input#positionId(type='text', name='positionId', value=position.positionId, disabled)
+					br
+				label(for='name') Название
+				input#name(type='text', name='name', value=(position?position.name:'') required)
+				br
+				label(for='departmentName') Отдел
+				input#departmentName(type='text', name='departmentName', value=(position?position.departmentName:''), disabled)
+				br
+				label(for='abolished') Упразднена
+				input#abolished(type='radio', name='abolished', value=0, checked=(position?!position.abolished:true))
+				input#abolished(type='radio', name='abolished', value=1, checked=(position?!!position.abolished:false))
+				br
+				button(type='submin') Отправить

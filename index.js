@@ -4,6 +4,12 @@ const pool = require('./db.js');
 const cadrs = require('./cadrs.js');
 const generator = require('./generator.js');
 
+const Department = require('./models/department.js');
+const Worker = require('./models/worker.js');
+const Position = require('./models/position.js');
+const Bonus = require('./models/bonus.js');
+const WorkerBonus = require('./models/workerBonus.js');
+
 app.set('view engine', 'pug');
 
 //app.use(express.bodyParser());
@@ -39,92 +45,108 @@ app.get('/generateDB', function(req, res){ //TODO: заменить на POST
 	});
 });
 
-app.get('/show', function(req, res){
-	cadrs.fetchDB((err, result)=>{
-		if (err){
-			console.error('Ошибка получения данных с базы', err);
-			res.end(end);
-		}
-		else{
-			console.log(result);
-			res.render('show', {data: result});
-		}
-	});
-});
-
-app.get('/table', function(req, res){
-	cadrs.fetchDB((err, result, fields)=>{
-		console.log(result);
-		if (err){
-			console.error(err);
-			res.status(500).end();
-		}
-		else{
-			var data = {
-				title: 'Сотрудники',
-				head: {
-					fullName:'ФИО',
-					birthDay:'Дата рождения',
-					gender: 'Пол',
-					placeName: 'Должность',
-					departName: 'Отдел'
-				},
-				body: result
-			};
-			res.render('table', data);
-		}
-	});
-});
-
 app.get('/workers', function(req, res){
-	cadrs.fetchWorkers((err, result)=>{
-		if (err){
-			console.error(err);
-			res.status(500).end();
+	Worker.findAll({
+		include: [
+			{
+				model: Position,
+				include:[Department]
+			}
+		]
+	}).then((workers)=>{
+		console.log(workers[0].get());
+		var data= {
+			workers: workers
+		};
+		res.render('workers', data);
+	}).catch((err)=>{
+		console.error(err);
+		res.status(500).end();
+	});
+});
+
+app.get('/worker/(:workerId)', (req, res)=>{
+	Worker.findOne({
+		where:{
+			workerId: req.params.workerId
+		},
+		include: [
+			{
+				model: Position,
+				include:[Department]
+			},
+			{
+				model: Bonus,
+				//include:[WorkerBonus]
+			}
+		]
+	}).then((worker)=>{
+		if (worker){
+			console.log(worker.get({plain: true}));
+			var data = {
+				worker: worker
+			};
+			res.render('worker', data);
 		}
 		else{
-			var data= {
-				workers: result, 
-				error: err
-			};
-			res.render('workers', data);
+			res.status(404).end('Нет такого сотрудника');
 		}
-	});
+	}).catch((err)=>{
+		console.error(err);
+		res.status(500).end();
+	})
 });
 
 app.get('/departments', function(req, res){
-	cadrs.fetchDepartments((err, result)=>{
-		if (err){
-			console.error(err);
-			res.status(500).end();
-		}
-		else{
-			var data = {
-				departments: result,
-			};
-			res.render('departments', data);
-		}
-	});
+	Department.findAll().then((departments)=>{
+		var data = {
+			departments: departments,
+		};
+		res.render('departments', data);
+	}).catch((err)=>{
+		console.error('department.findAll error', err);
+		res.status(500).end();
+	})
 });
 
 app.get('/departments/new', (req, res)=>{
 	if (req.query.name){
-		cadrs.addDepartment({name: req.query.name}, (err, result)=>{
-			if (err){
-				console.error(err);
-				res.redirect('/departments?error');
-			}
-			else{
-				res.redirect('/departments');
-			}
-		})
+		Department.create({
+			name: req.query.name
+		}).then((department)=>{
+			res.redirect('/departments');
+		}).catch((err)=>{
+			console.error(err);
+			res.redirect('/departments?error');
+		});
 	}
 	else{
 		res.redirect('/departments?error');
 	}
 });
 
+//UNUSED
 app.get('/departments/(:id)', (req,res)=>{
+	Department.findOne({//найти отдел
+		where:{
+			departmentId: req.params.id
+		}
+	}).then((department)=>{
+		if (department){//Если отдел есть
+			return department.update({//Запросить обновление отдела
+				abolished: req.query.abolished, 
+				name: req.query.name
+			});
+		}
+		else{//Если отдела нет
+			res.redirect('/departments?404');
+		}
+	}).then((department)=>{//Если отдел обновлен
+		res.redirect('/departments');
+	}).catch((err)=>{//Если ошибка во время обновления отдела
+		console.error(err);
+		res.redirect('/departments?error');
+	});
 	cadrs.updateDepartment({
 		departmentId: req.params.id,
 		abolished: req.query.abolished, 
@@ -141,17 +163,14 @@ app.get('/departments/(:id)', (req,res)=>{
 });
 
 app.get('/positions', (req, res)=>{
-	cadrs.fetchPositions((err, result)=>{
-		if (err){
-			console.error(err);
-			res.status(500).end();
-		}
-		else{
-			var data = {
-				positions: result,
-			};
-			res.render('positions', data);
-		}
+	Position.findAll().then((positions)=>{
+		var data = {
+			positions: positions,
+		};
+		res.render('positions', data);
+	}).catch((err)=>{
+		console.error(err);
+		res.status(500).end();
 	});
 })
 
@@ -160,19 +179,18 @@ app.get('/position', (req, res)=>{
 });
 
 app.get('/position/(:id)', (req, res)=>{
-	cadrs.getPosition(req.params.id, (err, result)=>{
-		if (err){
-			console.error(err);
-			res.status(500).end();
+	Position.findOne({
+		where:{
+			positionId: req.params.id
 		}
-		else if (result.length>0){
-			var data = {
-				position: result[0]
-			};
-			res.render('position', data);
-		} else{
-			res.redirect('/position');
-		}
+	}).then((position)=>{
+		var data = {
+			position: position
+		};
+		res.render('position', data);
+	}).catch((err)=>{
+		console.error(err);
+		res.status(500).end();
 	});
 });
 app.get('/postposition', (req, res)=>{

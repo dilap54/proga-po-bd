@@ -1,0 +1,48 @@
+extends ./layout
+
+block title
+	title Отделы
+block content
+	div
+		.container
+			.row
+				.col
+					span.h2 Отделы
+			.row.mt-1
+				.col
+					table.table
+						thead
+							tr
+								th.text-center id
+								th.text-center Название
+								th.text-center Упразднить
+						tbody
+							- var abolished = departments.filter((department)=>{return department.abolished});
+							- var nonAbolished = departments.filter((department)=>{return !department.abolished});
+							each department in nonAbolished
+								tr
+									td=department['departmentId']
+									td=department['name']
+									td
+										form.mb-0(action='/departments/'+department['departmentId'], method='GET')
+											input(type='hidden', name='abolished', value=1)
+											button(type='submit') X
+							tr
+								form.mb-0(action='/departments/new', method='GET')
+									td +
+									td
+										input(name='name' required)
+									td
+										button(type='submit') Добавить
+							if abolished.length>0
+								tr
+									td(colspan=2)
+										b Упраздненные
+								each department in abolished
+									tr
+										td=department['departmentId']
+										td=department['name']
+										td
+											form.mb-0(action='/departments/'+department['departmentId'], method='GET')
+												input(type='hidden', name='abolished', value=0)
+												button(type='submit') +

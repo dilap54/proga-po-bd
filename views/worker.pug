@@ -1,0 +1,38 @@
+extends ./layout
+
+block title
+	title= 'Сотрудник #'+worker.workerId
+block content
+	- 
+		var birthDayFormatSettings = {
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit'
+		};
+	.container-fluid
+		.row
+			.col
+				a(href='/workers/') Все сотрудники
+				h3= 'Сотрудник #'+worker.workerId
+		.row
+			.col
+				.row
+					.col
+						b ФИО: 
+						=worker.fullName
+						br
+						b Дата Рождения: 
+						=worker.birthDay.toLocaleString('ru-RU', birthDayFormatSettings)
+						br
+						b Пол: 
+						=(worker['gender']) ? 'ж' : 'м'
+					.col
+						b Должность: 
+						a(href='/position/'+worker.position.positionId)= worker.position.name
+						br
+						b Отдел: 
+						a(href='/department/'+worker.position.department.departmentId)= worker.position.department.name
+					.col
+						b Бонусы: 
+						each bonus in worker.bonus
+							= bonus.name
