@@ -3,22 +3,59 @@ extends ./layout
 block title
 	title Должность
 block content
-	div
-		.container
-			h2 Должность
-			form(action='/postposition'+(position?'/'+position.positionId:''), method='GET')
-				if (position && position.positionId)
-					label(for='positionId') Id должности
-					input#positionId(type='text', name='positionId', value=position.positionId, disabled)
-					br
-				label(for='name') Название
-				input#name(type='text', name='name', value=(position?position.name:'') required)
+	- var firedWorkers = position.workers.filter((worker)=>{return worker.isFired});
+	- var nonFiredWorkers = position.workers.filter((worker)=>{return !worker.isFired});
+	.container-fluid
+		.row
+			.col
+				a(href='/department/'+position.department.departmentId) Назад к отделу
+				h3= 'Должность '+position.name + (position.abolished?' (упразднена)':'')
+		.row
+			.col
+				b ID: 
+				=position.positionId
 				br
-				label(for='departmentName') Отдел
-				input#departmentName(type='text', name='departmentName', value=(position?position.departmentName:''), disabled)
+				b Название: 
+				=position.name
 				br
-				label(for='abolished') Упразднена
-				input#abolished(type='radio', name='abolished', value=0, checked=(position?!position.abolished:true))
-				input#abolished(type='radio', name='abolished', value=1, checked=(position?!!position.abolished:false))
-				br
-				button(type='submin') Отправить
+				b Отдел: 
+					a(href='/department/'+position.department.departmentId)= position.department.name
+			.col
+				form(method='POST')
+					if (position.abolished)
+						button.btn.btn-primary(type='submit', formaction='/position/'+position.positionId+'/unabolishe') Восстановить
+					else
+						button.btn.btn-primary(type='submit', formaction='/position/'+position.positionId+'/abolishe' disabled=(!!nonFiredWorkers.length>0)) Упразднить
+						if (!!nonFiredWorkers.length>0)
+							br
+							| Нельзя упразднить должность, на которой есть работники
+		.row.mt-4
+			.col
+				h3 Сотрудники на этой должности
+				table.table
+					thead
+						tr
+							th ФИО
+							th Дата рождения
+							th Пол
+							th {pen}
+					tbody
+						each worker in nonFiredWorkers
+							tr
+								td=worker['fullName']
+								td=worker['birthDay'].toLocaleString('ru-RU', birthDayFormatSettings)
+								td=(worker['gender']) ? 'ж' : 'м'
+								td
+									a(href='/worker/'+worker.workerId)
+										img(src='/img/pen.svg' height='16px')
+						if firedWorkers.length>0
+							tr
+								th(colspan=6) Уволенные
+							each worker in firedWorkers
+								tr
+									td=worker['fullName']
+									td=worker['birthDay'].toLocaleString('ru-RU', birthDayFormatSettings)
+									td=(worker['gender']) ? 'ж' : 'м'
+									td
+										a(href='/worker/'+worker.workerId)
+											img(src='/img/pen.svg' height='16px')

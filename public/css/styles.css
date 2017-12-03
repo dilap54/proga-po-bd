@@ -11,3 +11,13 @@ a.overview, a.overview:hover{
     color: inherit;
     text-decoration: none;
 }
+.title{
+    height: 7rem;
+    background-color: #0000009e;
+    color: white;
+    padding: 1rem;
+}
+.title img{
+    height: 84px;
+    vertical-align: top;
+}

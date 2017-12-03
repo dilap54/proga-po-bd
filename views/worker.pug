@@ -13,11 +13,14 @@ block content
 		.row
 			.col
 				a(href='/workers/') Все сотрудники
-				h3= 'Сотрудник #'+worker.workerId
+				h3= 'Сотрудник #'+worker.workerId+' '+ (worker.isFired ? '(уволен)' : '')
 		.row
 			.col
 				.row
 					.col
+						| Дата изменения:
+						=worker.createdAt
+						br
 						b ФИО: 
 						=worker.fullName
 						br
@@ -25,7 +28,7 @@ block content
 						=worker.birthDay.toLocaleString('ru-RU', birthDayFormatSettings)
 						br
 						b Пол: 
-						=(worker['gender']) ? 'ж' : 'м'
+						=(worker.gender) ? 'женский' : 'мужской'
 					.col
 						b Должность: 
 						a(href='/position/'+worker.position.positionId)= worker.position.name
@@ -33,6 +36,38 @@ block content
 						b Отдел: 
 						a(href='/department/'+worker.position.department.departmentId)= worker.position.department.name
 					.col
-						b Бонусы: 
+						b Бонусы:
+						br
 						each bonus in worker.bonus
-							= bonus.name
+							i= bonus.name
+							br
+							|  с 
+							= bonus.workerBonus.startDate.toLocaleString('ru-RU', birthDayFormatSettings)
+							|  по 
+							= bonus.workerBonus.endDate.toLocaleString('ru-RU', birthDayFormatSettings)
+		.row
+			.col
+				a(href='/worker/'+worker.workerId+'/change') Изменить
+		.row.mt-4
+			.col
+				h3 История изменений
+				table.table
+					thead
+						tr
+							th ФИО
+							th Дата рождения
+							th Пол
+							th Статус
+							th Должность
+							th Отдел
+							th Дата изменения
+					tbody
+						each workerHistory in worker.workerHistories
+							tr
+								td=workerHistory['fullName']
+								td=workerHistory['birthDay'].toLocaleString('ru-RU', birthDayFormatSettings)
+								td=(workerHistory['gender']) ? 'ж' : 'м'
+								td=(workerHistory['isFired']) ? 'уволен' : 'не уволен'
+								td=workerHistory.position.name
+								td=workerHistory.position.department.name
+								td=workerHistory.createdAt

@@ -38,3 +38,8 @@ const Worker = require('./worker.js');
 Position.hasMany(Worker, {
     foreignKey: 'positionId'
 });
+
+const WorkerHistory = require('./workerHistory.js');
+Position.hasMany(WorkerHistory, {
+    foreignKey: 'positionId'
+});

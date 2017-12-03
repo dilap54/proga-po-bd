@@ -1,11 +1,15 @@
 const Sequelize = require('sequelize');
 const sequelize = require('../db-sequelize.js');
 
-const Worker = sequelize.define('worker', {
-    workerId: {
+const WorkerHistory = sequelize.define('workerHistory', {
+    workerHistoryId: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
         primaryKey: true
+    },
+    workerId: {
+        type: Sequelize.INTEGER,
+        allowNull: false
     },
     fullName: {
         type: Sequelize.STRING,
@@ -24,30 +28,22 @@ const Worker = sequelize.define('worker', {
     isFired:{
         type: Sequelize.BOOLEAN,
         allowNull: false
-    },
-    createdAt:{
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW
     }
 },
 {
-    timestamps: false
+    tableName: 'workersHistory',
+    updatedAt: false
 });
 
-module.exports = Worker;
+module.exports = WorkerHistory;
+
+const Worker = require('./worker.js');
+
+WorkerHistory.belongsTo(Worker, {
+    foreignKey: 'workerId'
+});
 
 const Position = require('./position.js');
-Worker.belongsTo(Position, {
+WorkerHistory.belongsTo(Position, {
     foreignKey: 'positionId'
-});
-
-const WorkerBonus = require('./workerBonus.js');
-const Bonus = require('./bonus.js');
-
-Worker.belongsToMany(Bonus, { through:WorkerBonus, foreignKey: 'workerId'});
-
-const WorkerHistory = require('./workerHistory.js');
-
-Worker.hasMany(WorkerHistory, {
-    foreignKey: 'workerId'
 });

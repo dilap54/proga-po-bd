@@ -10,40 +10,46 @@ block content
 			day: '2-digit'
 		};
 	div
-		.container
-			h2 Сотрудники
-			table.table
-				thead
-					tr
-						th ФИО
-						th Дата рождения
-						th Пол
-						th Должность
-						th Отдел
-						th {pen}
-				tbody
-					- var firedWorkers = workers.filter((worker)=>{return worker.isFired});
-					- var nonFiredWorkers = workers.filter((worker)=>{return !worker.isFired});
-					each worker in nonFiredWorkers
-						tr
-							td=worker['fullName']
-							td=worker['birthDay'].toLocaleString('ru-RU', birthDayFormatSettings)
-							td=(worker['gender']) ? 'ж' : 'м'
-							td=worker.position.name
-							td=worker.position.department.name
-							td
-								a(href='/worker/'+worker.workerId)
-									img(src='/img/pen.svg' height='16px')
-					if firedWorkers.length>0
-						tr
-							td(colspan=6) Уволенные
-						each worker in firedWorkers
+		.container-fluid
+			.row
+				.col-sm-10
+					h2 Сотрудники
+				.col-sm-2
+					a.btn.btn-primary(href='/worker/new') Новый
+			.row
+				.col
+					table.table
+						thead
 							tr
-								td=worker['fullName']
-								td=worker['birthDay'].toLocaleString('ru-RU', birthDayFormatSettings)
-								td=(worker['gender']) ? 'ж' : 'м'
-								td=worker.position.name
-								td=worker.position.department.name
-								td
-									a(href='/worker/'+worker.workerId)
-										img(src='/img/pen.svg' height='16px')
+								th ФИО
+								th Дата рождения
+								th Пол
+								th Должность
+								th Отдел
+								th {pen}
+						tbody
+							- var firedWorkers = workers.filter((worker)=>{return worker.isFired});
+							- var nonFiredWorkers = workers.filter((worker)=>{return !worker.isFired});
+							each worker in nonFiredWorkers
+								tr
+									td=worker['fullName']
+									td=worker['birthDay'].toLocaleString('ru-RU', birthDayFormatSettings)
+									td=(worker['gender']) ? 'ж' : 'м'
+									td=worker.position.name
+									td=worker.position.department.name
+									td
+										a(href='/worker/'+worker.workerId)
+											img(src='/img/pen.svg' height='16px')
+							if firedWorkers.length>0
+								tr
+									th(colspan=6) Уволенные
+								each worker in firedWorkers
+									tr
+										td=worker['fullName']
+										td=worker['birthDay'].toLocaleString('ru-RU', birthDayFormatSettings)
+										td=(worker['gender']) ? 'ж' : 'м'
+										td=worker.position.name
+										td=worker.position.department.name
+										td
+											a(href='/worker/'+worker.workerId)
+												img(src='/img/pen.svg' height='16px')

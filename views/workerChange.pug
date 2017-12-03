@@ -1,0 +1,79 @@
+extends ./layout
+
+block title
+	title= 'Редактирование сотрудника '
+block content
+	- 
+		var birthDayFormatSettings = {
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit'
+		};
+	-
+		worker = worker || {
+			workerId: 'new',
+			fullName: '',
+			birthDay: new Date(),
+			gender: 0,
+			isFired: 0
+		}
+	.container-fluid
+		.row
+			.col
+				if (worker.workerId != 'new')
+					a(href='/worker/'+worker.workerId) Назад
+					h3= 'Редактирование сотрудника #'+worker.workerId
+				else
+					a(href='/workers/') Назад
+					h3= 'Создание нового сотрудника'
+		.row
+			.col
+				.row
+					.col
+						form(action='/worker/'+worker.workerId, method='POST')
+							.form-group
+								label(for='fullName-input')
+									b ФИО
+								input.form-control#fullName-input(type='string', name='fullName', value=worker.fullName, required)
+							.form-group
+								label(for='birthDay-input')
+									b Дата Рождения
+								input.form-control#birthDay-input(type='date', name='birthDay', value=worker.birthDay, required)
+							legend.col-form-legend
+								b Пол
+							.form-check
+								label.form-check-label
+									input.form-check-input(type='radio', name='gender', value=0, checked=(worker.gender==0))
+									|  Мужской
+								label.form-check-label
+									input.form-check-input(type='radio', name='gender', value=1, checked=(worker.gender==1))
+									|  Женский
+							legend.col-form-legend
+								b Состояние
+							.form-check
+								label.form-check-label
+									input.form-check-input(type='radio', name='isFired', value=0, checked=(worker.isFired==0))
+									|  Не уволен
+								label.form-check-label
+									input.form-check-input(type='radio', name='isFired', value=1, checked=(worker.isFired==1))
+									|  Уволен
+							.form-group
+								label(for='position-input')
+									b Должность
+								select.form-control#position-input(name='positionId')
+									each department in departments
+										optgroup(label=department.name)
+											each position in department.positions
+												option(value=position.positionId, selected=(position.positionId==worker.positionId))= position.name
+							button.btn.btn-primary(type='submit') Сохранить
+					if (worker.workerId != 'new')
+						.col
+							b Бонусы:
+							br
+							each bonus in worker.bonus
+								i= bonus.name
+								br
+								|  с 
+								= bonus.workerBonus.startDate.toLocaleString('ru-RU', birthDayFormatSettings)
+								|  по 
+								= bonus.workerBonus.endDate.toLocaleString('ru-RU', birthDayFormatSettings)

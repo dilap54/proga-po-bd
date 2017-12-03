@@ -3,30 +3,38 @@ extends ./layout
 block title
 	title Должности
 block content
-	div
-		.container
-			h2 Должности
-			table.table
-				thead
-					tr
-						th.text-center id
-						th.text-center Название
-						th.text-center id Отдела
-				tbody
-					- var abolished = positions.filter((item)=>{return item.abolished});
-					- var nonAbolished = positions.filter((item)=>{return !item.abolished});
-					each position in nonAbolished
+	.container-fluid
+		.row
+			.col
+				h2 Должности
+		.row
+			.col
+				table.table
+					thead
 						tr
-							td
-								a(href='/position/'+position['positionId'])=position['positionId']
-							td=position['name']
-							td=position['departmentId']
-					if abolished.length>0
-						tr
-							td(colspan=2) Упраздненные
-						each position in abolished
+							th.text-center id
+							th.text-center Название
+							th.text-center Отдел
+							th.text-center {pen}
+					tbody
+						- var abolished = positions.filter((item)=>{return item.abolished});
+						- var nonAbolished = positions.filter((item)=>{return !item.abolished});
+						each position in nonAbolished
 							tr
+								td= position.positionId
+								td= position.name
+								td= position.department.name
 								td
-									a(href='/position/'+position['positionId'])=position['positionId']
-								td=position['name']
-								td=position['departmentId']
+									a(href='/position/'+position.positionId)
+										img(src='/img/pen.svg', height='20px')
+						if abolished.length>0
+							tr
+								td(colspan=2) Упраздненные
+							each position in abolished
+								tr
+									td= position.positionId
+									td= position.name
+									td= position.department.name
+									td
+										a(href='/position/'+position.positionId)
+											img(src='/img/pen.svg', height='20px')

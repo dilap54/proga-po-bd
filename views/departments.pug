@@ -4,7 +4,7 @@ block title
 	title Отделы
 block content
 	div
-		.container
+		.container-fluid
 			.row
 				.col
 					span.h2 Отделы
@@ -15,25 +15,24 @@ block content
 							tr
 								th.text-center id
 								th.text-center Название
-								th.text-center Упразднить
+								th.text-center {pen}
 						tbody
 							- var abolished = departments.filter((department)=>{return department.abolished});
-							- var nonAbolished = departments.filter((department)=>{return !department.abolished});
+							- var nonAbolished = departments.filter((department)=>{return !department.abolished})
+							tr
+								form.mb-0(action='/department/new', method='POST')
+									td +
+									td
+										input.form-control(name='name' required)
+									td
+										button.btn.btn-primary(type='submit') Добавить
 							each department in nonAbolished
 								tr
 									td=department['departmentId']
 									td=department['name']
 									td
-										form.mb-0(action='/departments/'+department['departmentId'], method='GET')
-											input(type='hidden', name='abolished', value=1)
-											button(type='submit') X
-							tr
-								form.mb-0(action='/departments/new', method='GET')
-									td +
-									td
-										input(name='name' required)
-									td
-										button(type='submit') Добавить
+										a(href='/department/'+department.departmentId)
+											img(src='/img/pen.svg', height='20px')
 							if abolished.length>0
 								tr
 									td(colspan=2)
@@ -43,6 +42,5 @@ block content
 										td=department['departmentId']
 										td=department['name']
 										td
-											form.mb-0(action='/departments/'+department['departmentId'], method='GET')
-												input(type='hidden', name='abolished', value=0)
-												button(type='submit') +
+											a(href='/department/'+department.departmentId)
+												img(src='/img/pen.svg', height='20px')

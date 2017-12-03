@@ -1,0 +1,64 @@
+extends ./layout
+
+block title
+	title= 'Отдел #'+department.departmentId
+block content
+	- var abolished = department.positions.filter((item)=>{return item.abolished});
+	- var nonAbolished = department.positions.filter((item)=>{return !item.abolished});
+	.container-fluid
+		.row
+			.col
+				a(href='/departments/') Все отделы
+				h3= department.name + (department.abolished?' (упразднен)':'')
+		.row
+			.col
+				b ID: 
+				=department.departmentId
+				br
+				b Название: 
+				=department.name
+			.col
+				form(method='POST')
+					if (department.abolished)
+						button.btn.btn-primary(type='submit', formaction='/department/'+department.departmentId+'/unabolishe') Восстановить
+					else
+						button.btn.btn-primary(type='submit', formaction='/department/'+department.departmentId+'/abolishe' disabled=(!!nonAbolished.length>0)) Упразднить
+						if (!!nonAbolished.length>0)
+							br
+							| Нельзя упразднить отдел, в котором есть действующие должности
+		.row.mt-4
+			.col
+				h3 Должности в отделе
+				table.table
+					thead
+						tr
+							th ID
+							th Название
+							th {pen}
+					tbody
+						tr
+							form.mb-0(action='/position/new', method='POST')
+								td +
+								td
+									input(type='hidden', name='departmentId', value=department.departmentId)
+									input.form-control(name='name' required)
+								td
+									button.btn.btn-primary(type='submit') Добавить
+						each position in nonAbolished
+							tr
+								td= position.positionId
+								td= position.name
+								td
+									a(href='/position/'+position.positionId)
+										img(src='/img/pen.svg', height='20px')
+						if abolished.length>0
+							tr
+								td(colspan=4)
+									b Упраздненные
+							each position in abolished
+								tr
+									td= position.positionId
+									td= position.name
+									td
+										a(href='/position/'+position.positionId)
+											img(src='/img/pen.svg', height='20px')
