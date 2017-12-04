@@ -12,10 +12,10 @@ block content
 				table.table
 					thead
 						tr
-							th.text-center id
-							th.text-center Название
-							th.text-center Отдел
-							th.text-center {pen}
+							th id
+							th Название
+							th Отдел
+							th {pen}
 					tbody
 						- var abolished = positions.filter((item)=>{return item.abolished});
 						- var nonAbolished = positions.filter((item)=>{return !item.abolished});

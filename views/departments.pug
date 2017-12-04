@@ -13,9 +13,9 @@ block content
 					table.table
 						thead
 							tr
-								th.text-center id
-								th.text-center Название
-								th.text-center {pen}
+								th id
+								th Название
+								th {pen}
 						tbody
 							- var abolished = departments.filter((department)=>{return department.abolished});
 							- var nonAbolished = departments.filter((department)=>{return !department.abolished})

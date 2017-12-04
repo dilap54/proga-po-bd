@@ -26,25 +26,25 @@ app.use((req, res,next)=>{
 });
 
 
-app.get('/', function (req, res) {
+app.get('/', (req, res)=> {
 	res.render('index');
 });
 
-app.post('/createDB', function(req, res){ //TODO: заменить на POST
+app.post('/createDB', (req, res)=>{ //TODO: заменить на POST
 	cadrs.createDB(function(err, result){
 		console.log(err, result);
 		res.end(err+result);
 	});
 });
 
-app.post('/dropDB', function(req, res){ //TODO: заменить на POST
+app.post('/dropDB', (req, res)=>{ //TODO: заменить на POST
 	cadrs.dropDB(function(err, result){
 		console.log(err, result);
 		res.end(err+result);
 	});
 });
 
-app.post('/generateDB', function(req, res){ //TODO: заменить на POST
+app.post('/generateDB', (req, res)=>{ //TODO: заменить на POST
 	cadrs.generateDB(function(err, result){
 		console.log(err, result);
 		res.end(err+result);
