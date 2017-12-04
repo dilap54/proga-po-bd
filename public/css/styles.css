@@ -1,3 +1,9 @@
+body{
+    background-color: rgba(128, 128, 128, 0.29);
+}
+.row{
+    background-color: white;
+}
 a.overview, a.overview:hover{
     color: white !important;
     background-color: #1976D2;
@@ -12,12 +18,12 @@ a.overview, a.overview:hover{
     text-decoration: none;
 }
 .title{
-    height: 7rem;
+    height: 6.5rem;
     background-color: #0000009e;
     color: white;
     padding: 1rem;
+    overflow: hidden;
 }
 .title img{
     height: 84px;
-    vertical-align: top;
 }

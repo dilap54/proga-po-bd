@@ -29,7 +29,8 @@ block content
 										img(src='/img/pen.svg', height='20px')
 						if abolished.length>0
 							tr
-								td(colspan=2) Упраздненные
+								td(colspan=4)
+									b Упраздненные
 							each position in abolished
 								tr
 									td= position.positionId
