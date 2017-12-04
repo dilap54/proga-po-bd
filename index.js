@@ -2,7 +2,6 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser')
 const cadrs = require('./cadrs.js');
-const generator = require('./generator.js');
 
 const Sequelize = require('sequelize');
 
@@ -31,21 +30,21 @@ app.get('/', function (req, res) {
 	res.render('index');
 });
 
-app.get('/createDB', function(req, res){ //TODO: заменить на POST
+app.post('/createDB', function(req, res){ //TODO: заменить на POST
 	cadrs.createDB(function(err, result){
 		console.log(err, result);
 		res.end(err+result);
 	});
 });
 
-app.get('/dropDB', function(req, res){ //TODO: заменить на POST
+app.post('/dropDB', function(req, res){ //TODO: заменить на POST
 	cadrs.dropDB(function(err, result){
 		console.log(err, result);
 		res.end(err+result);
 	});
 });
 
-app.get('/generateDB', function(req, res){ //TODO: заменить на POST
+app.post('/generateDB', function(req, res){ //TODO: заменить на POST
 	cadrs.generateDB(function(err, result){
 		console.log(err, result);
 		res.end(err+result);
@@ -483,7 +482,8 @@ app.post('/position/(:positionId)/unabolishe', (req, res)=>{
 	});
 });
 
-app.get('/bonuses', function(req, res){
+//Таблица с бонусами
+app.get('/bonuses', (req, res)=>{
 	Bonus.findAll().then((bonuses)=>{
 		var data = {
 			bonuses: bonuses,
@@ -494,6 +494,10 @@ app.get('/bonuses', function(req, res){
 		res.status(500).end();
 	});
 });
+
+app.get('/manage', (req, res)=>{
+	res.render('manage');
+})
 
 const PORT = 18092;
 

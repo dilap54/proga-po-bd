@@ -1,27 +1,14 @@
-const pool = require('./db.js');
+const sequelize = require('./db-sequelize.js');
 const fs = require('fs');
 const async = require('async');
 const generator = require('./generator.js');
 
-
-function buildUpdate(table, set, where){
-    var setArr = []
-    for (key in set){
-        if (set[key] !== undefined){
-            setArr.push('`'+key+'` = '+pool.escape(set[key]));
-        }
-    }
-    var whereArr = []
-    for (key in where){
-        if (where[key] !== undefined){
-            whereArr.push('`'+key+'` = '+pool.escape(where[key]));
-        }
-    }
-    console.log('setArr', setArr.join(', '));
-    console.log('whereArr', whereArr.join('AND'));
-    return 'UPDATE `'+table+'` SET '+setArr.join(', ')+' WHERE '+whereArr.join('AND');
-}
-
+const Department = require('./models/department.js');
+const Worker = require('./models/worker.js');
+const Position = require('./models/position.js');
+const Bonus = require('./models/bonus.js');
+const WorkerBonus = require('./models/workerBonus.js');
+const WorkerHistory = require('./models/workerHistory.js');
 
 var tables = [
     {
@@ -54,7 +41,11 @@ var creatingFuncionsArray = tables.map((table)=>{
     return (callback)=>{
         console.log('Создание таблицы', table.name);
         var query = fs.readFileSync('./DB-schema/'+table.sql).toString('utf8');
-        pool.query(query, callback);
+        sequelize.query(query).then((result)=>{
+            callback(null, result);
+        }).catch((err)=>{
+            callback(err);
+        })
     };
 });
 
@@ -90,13 +81,37 @@ var creatingConstraints = constraints.map((constraint)=>{
         console.log('Создание ограничения', constraint.name);
         var query = fs.readFileSync('./DB-schema/'+constraint.sql).toString('utf8');
         console.log(query);
-        pool.query(query, callback);
+        sequelize.query(query).then((result)=>{
+            callback(null, result);
+        }).catch((err)=>{
+            callback(err);
+        })
     };
 });
 
 
 function createDB(callback){
     async.series(creatingFuncionsArray.concat(creatingConstraints), callback);
+    /*
+    Department.sync()
+        .then(Position.sync())
+        .then(Worker.sync())
+        .then(Bonus.sync())
+        .then(WorkerBonus.sync())
+        .then(WorkerHistory.sync())
+        .then((result)=>{
+            callback(null, result);
+        }).catch((err)=>{
+            callback(err);
+        })
+    */
+    /*
+    Promise.all([Department.sync(), Position.sync(), Worker.sync(), Bonus.sync(), WorkerBonus.sync(), WorkerHistory.sync()]).then((result)=>{
+        callback(null, result);
+    }).catch((err)=>{
+        callback(err);
+    })
+    */
 }
 
 function dropDB(callback){
@@ -106,7 +121,11 @@ function dropDB(callback){
         query += 'DROP TABLE IF EXISTS `'+table.name+'`;\n';
     });
     query += 'SET FOREIGN_KEY_CHECKS = 1;\n';
-    pool.query(query, callback);
+    sequelize.query(query).then((result)=>{
+        callback(null, result);
+    }).catch((err)=>{
+        callback(err);
+    })
 }
 
 function generateDB(callback){
@@ -115,146 +134,35 @@ function generateDB(callback){
             callback(err);
         }
         else{
-            var departments = generatordb.getDepartments();
+            var departments = generatordb.getDepartments().map((department)=>{
+                return {
+                    name: department
+                };
+            });
             var workplaces = generatordb.genWorkplaces();
             var workers = [];
 
-            async.series([
-                (callback)=>{
-                    console.log('Заполнение таблицы отделов');
-                    
-                    async.each(departments, (department, callback)=>{
-                        pool.query('INSERT INTO departments (`name`)  VALUES(?);', department, callback);
-                    }, 
-                    callback);
-                },
-                (callback)=>{
-                    console.log('Заполнение таблицы должностей');
-                    
-                    async.each(workplaces, (workplace, callback)=>{
-                        pool.query('INSERT INTO positions (`name`, `departmentId`)  VALUES(?, ?);', [workplace.name, workplace.departmentId], callback);
-                    }, 
-                    callback);
-                },
-                (callback)=>{
-                    console.log('Заполнение таблицы сотрудников');
-                    var workplaceIdNum = 1;
-                    for (var i=0; i<workplaces.length; i++){
-                        workers.push(generatordb.genWorker());
-                    }
-
-                    async.each(workers, (worker, callback)=>{
-                        var query = 'INSERT INTO workers (`fullName`, `birthDay`, `gender`, `positionId`) VALUES(?,?,?,?)';
-                        pool.query(query, [worker.fullName, worker.birthDay, worker.sex, workplaceIdNum++], callback);
-                    },
-                    callback);
+            Department.bulkCreate(departments).then(()=>{
+                return Position.bulkCreate(workplaces);
+            }).then(()=>{
+                var workplaceIdNum = 1;
+                for (var i=0; i<workplaces.length; i++){
+                    var worker = generatordb.genWorker();
+                    worker.positionId = i+1;
+                    workers.push(worker);
                 }
-            ], callback);
-            
+                return Worker.bulkCreate(workers);
+            }).then(()=>{
+                callback(null);
+            }).catch((err)=>{
+                callback(err);
+            })            
         }
     });
 }
 
-function fetchDB(callback){
-    var query = 'SELECT * FROM `workers` worker\
-        LEFT OUTER JOIN \
-            (SELECT name as placeName, positionId, departmentId FROM `positions`) as place\
-        ON worker.positionId = place.positionId\
-        LEFT OUTER JOIN \
-            (SELECT name as departName, departmentId FROM `departments`) as depart\
-        ON place.departmentId = depart.departmentId';
-    pool.query(query, callback);
-}
-
-function fetchWorkers(callback){
-    var query = 'SELECT * FROM `workers`';
-    pool.query(query, callback)
-}
-
-function fetchWorkersHistory(callback){
-    var query = 'SELECT * FROM `workersHistory`';
-    pool.query(query, callback)
-}
-
-function fetchDepartments(callback){
-    var query = 'SELECT * FROM `departments`';
-    pool.query(query, callback)
-}
-function addDepartment(department, callback){
-    pool.query('INSERT INTO departments (`name`)  VALUES(?);', department.name, callback);
-}
-function updateDepartment(department, callback){
-    console.log(department);
-    var query = buildUpdate('departments', {
-        name: department.name, 
-        abolished: department.abolished
-    }, {
-        departmentId: department.departmentId
-    });
-    console.log(query);
-    pool.query(query, callback);
-}
-
-function fetchPositions(callback){
-    var query = 'SELECT * FROM `positions`';
-    pool.query(query, callback)
-}
-function getPosition(positionId, callback){
-    pool.query(
-        'SELECT * FROM `positions` as positions\
-        JOIN (\
-            SELECT departmentId, name as departmentName FROM `departments`\
-        ) as departments\
-        ON	positions.departmentId = departments.departmentId\
-        WHERE positions.positionId = ?',
-        positionId,
-        callback
-    )
-}
-function setPosition(position, callback){
-    if (position.positionId){
-        console.log(position);
-        var query = buildUpdate('positions',{
-            name: position.name, 
-            abolished: position.abolished
-        }, {
-            positionId: position.positionId
-        });
-        pool.query(query, callback);
-    }
-    else{
-        pool.query('INSERT INTO positions (`name`, `abolished`, `departmentId`) VALUES (?,?,?)', [position.name, position.abolished, position.departmentId], callback);
-    }
-}
-
-function fetchBonuses(callback){
-    var query = 'SELECT * FROM `bonuses`';
-    pool.query(query, callback)
-}
-
-function fetchWorkersBonuses(callback){
-    var query = 'SELECT * FROM `workersBonuses`';
-    pool.query(query, callback)
-}
 
 exports.dropDB = dropDB;
 exports.createDB = createDB;
 exports.generateDB = generateDB;
-exports.fetchDB = fetchDB;
-
-exports.fetchWorkers = fetchWorkers;
-
-exports.fetchWorkersHistory = fetchWorkersHistory;
-
-exports.fetchDepartments = fetchDepartments;
-exports.addDepartment = addDepartment;
-exports.updateDepartment = updateDepartment;
-
-exports.fetchPositions = fetchPositions;
-exports.getPosition = getPosition;
-exports.setPosition = setPosition;
-
-exports.fetchBonuses = fetchBonuses;
-
-exports.fetchWorkersBonuses = fetchWorkersBonuses;
 

@@ -93,22 +93,22 @@ function GeneratorBD(callback){
     }
 
     this.genWorker = function(){
-        var name, surname, grandname, sex;
+        var name, surname, grandname, gender;
         if (Math.random()>0.5){
             name = this.genNameMale();
             surname = this.genSurnameMale();
             grandname = this.genGrandMale();
-            sex = false;
+            gender = false;
         }
         else{
             name = this.genNameFemale();
             surname = this.genSurnamesFemale();
             grandname = this.genGrandFemale();
-            sex = true;
+            gender = true;
         }
         var worker = {
             fullName: surname +' '+ name +' '+ grandname,
-            sex: sex,
+            gender: gender,
             birthDay: this.genBirthDay()
         };
         return worker;

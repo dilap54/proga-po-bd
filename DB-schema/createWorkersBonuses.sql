@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `os`.`workersBonuses` 
+CREATE TABLE IF NOT EXISTS `workersBonuses` 
     (   `workerBonusId` INT NOT NULL AUTO_INCREMENT,
         `bonusId` INT NOT NULL , 
         `workerId` INT NOT NULL ,

@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `os`.`workers`
+CREATE TABLE IF NOT EXISTS `workers`
     ( `workerId` INT NOT NULL AUTO_INCREMENT ,
         `fullName` VARCHAR(255) NOT NULL ,
         `birthDay` DATE NOT NULL , 
