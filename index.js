@@ -1,7 +1,6 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser')
-const pool = require('./db.js');
 const cadrs = require('./cadrs.js');
 const generator = require('./generator.js');
 
@@ -485,17 +484,14 @@ app.post('/position/(:positionId)/unabolishe', (req, res)=>{
 });
 
 app.get('/bonuses', function(req, res){
-	cadrs.fetchBonuses((err, result)=>{
-		if (err){
-			console.error(err);
-			res.status(500).end();
-		}
-		else{
-			var data = {
-				bonuses: result,
-			};
-			res.render('bonuses', data);
-		}
+	Bonus.findAll().then((bonuses)=>{
+		var data = {
+			bonuses: bonuses,
+		};
+		res.render('bonuses', data);
+	}).catch((err)=>{
+		console.error(err);
+		res.status(500).end();
 	});
 });
 

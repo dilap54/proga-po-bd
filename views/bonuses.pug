@@ -3,28 +3,37 @@ extends ./layout
 block title
 	title Бонусы
 block content
-	div
-		.container
-			h2 Бонусы
-			table.table
-				thead
-					tr
-						th.text-center id
-						th.text-center Название
-						th.text-center Описание
-				tbody
-					- var abolished = bonuses.filter((item)=>{return item.deleted});
-					- var nonAbolished = bonuses.filter((item)=>{return !item.deleted});
-					each bonus in nonAbolished
+	.container-fluid
+		.row
+			.col
+				h2 Бонусы
+				table.table
+					thead
 						tr
-							td=bonus['bonusId']
-							td=bonus['name']
-							td=bonus['description']
-					if abolished.length>0
-						tr
-							td(colspan=2) Упраздненные
-						each bonus in abolished
+							th.text-center id
+							th.text-center Название
+							th.text-center Описание
+							th.text-center {pen}
+					tbody
+						- var abolished = bonuses.filter((item)=>{return item.deleted});
+						- var nonAbolished = bonuses.filter((item)=>{return !item.deleted});
+						each bonus in nonAbolished
 							tr
-								td=bonus['bonusId']
-								td=bonus['name']
-								td=bonus['description']
+								td=bonus.bonusId
+								td=bonus.name
+								td=bonus.description
+								td
+									a(href='/bonus/'+bonus.bonusId)
+										img(src='/img/pen.svg', height='20px')
+
+						if abolished.length>0
+							tr
+								td(colspan=2) Упраздненные
+							each bonus in abolished
+								tr
+									td=bonus.bonusId
+									td=bonus.name
+									td=bonus.description
+									td
+										a(href='/bonus/'+bonus.bonusId)
+											img(src='/img/pen.svg', height='20px')

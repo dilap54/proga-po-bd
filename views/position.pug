@@ -23,7 +23,10 @@ block content
 			.col
 				form(method='POST')
 					if (position.abolished)
-						button.btn.btn-primary(type='submit', formaction='/position/'+position.positionId+'/unabolishe') Восстановить
+						button.btn.btn-primary(type='submit', formaction='/position/'+position.positionId+'/unabolishe' disabled=(!!position.department.abolished)) Восстановить
+						if (!!position.department.abolished)
+							br
+							| Нельзя восстановить должность, если отдел упразднен
 					else
 						button.btn.btn-primary(type='submit', formaction='/position/'+position.positionId+'/abolishe' disabled=(!!nonFiredWorkers.length>0)) Упразднить
 						if (!!nonFiredWorkers.length>0)
