@@ -3,44 +3,48 @@ extends ./layout
 block title
 	title Отделы
 block content
-	div
-		.container-fluid
-			.row
-				.col
-					h2 Отделы
-			.row
-				.col
-					table.table
-						thead
+	.container-fluid
+		.row
+			.col-sm-4.mt-3
+				h2 Отделы
+			.col-sm-8.mt-3
+				form.form-inline(action='')
+					input.form-control(type='text', name='search', value=search)
+					span.input-group-btn
+						button.btn.btn-primary(type='submit') Поиск
+		.row
+			.col
+				table.table
+					thead
+						tr
+							th id
+							th Название
+							th {pen}
+					tbody
+						- var abolished = departments.filter((department)=>{return department.abolished});
+						- var nonAbolished = departments.filter((department)=>{return !department.abolished})
+						tr
+							form.mb-0(action='/department/new', method='POST')
+								td +
+								td
+									input.form-control(name='name' required)
+								td
+									button.btn.btn-primary(type='submit') Добавить
+						each department in nonAbolished
 							tr
-								th id
-								th Название
-								th {pen}
-						tbody
-							- var abolished = departments.filter((department)=>{return department.abolished});
-							- var nonAbolished = departments.filter((department)=>{return !department.abolished})
+								td=department['departmentId']
+								td=department['name']
+								td
+									a(href='/department/'+department.departmentId)
+										img(src='/img/pen.svg', height='20px')
+						if abolished.length>0
 							tr
-								form.mb-0(action='/department/new', method='POST')
-									td +
-									td
-										input.form-control(name='name' required)
-									td
-										button.btn.btn-primary(type='submit') Добавить
-							each department in nonAbolished
+								td(colspan=2)
+									b Упраздненные
+							each department in abolished
 								tr
 									td=department['departmentId']
 									td=department['name']
 									td
 										a(href='/department/'+department.departmentId)
 											img(src='/img/pen.svg', height='20px')
-							if abolished.length>0
-								tr
-									td(colspan=2)
-										b Упраздненные
-								each department in abolished
-									tr
-										td=department['departmentId']
-										td=department['name']
-										td
-											a(href='/department/'+department.departmentId)
-												img(src='/img/pen.svg', height='20px')

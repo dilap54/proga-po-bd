@@ -72,8 +72,22 @@ block content
 							br
 							each bonus in worker.bonus
 								i= bonus.name
+								form.form-inline(action='/worker/bonus/'+bonus.workerBonus.workerBonusId, method='POST')
+									.input-group
+										.input-group-addon С
+										input.form-control(type='datetime-local', name='startDate', value=bonus.workerBonus.startDate.toISOString().split('.')[0], required)
+										.input-group-addon По
+										input.form-control(type='datetime-local', name='endDate', value=bonus.workerBonus.endDate.toISOString().split('.')[0], required)
+									button.btn.btn-primary(type='submit') Обновить
+							form.form-inline(action='/worker/bonus/new', method='POST')
+								input(type='hidden', name='workerId', value=worker.workerId)
+								select.form-control(name='bonusId')
+									each bonus in bonuses
+										option(value=bonus.bonusId)= bonus.name
 								br
-								|  с 
-								= bonus.workerBonus.startDate.toLocaleString('ru-RU', birthDayFormatSettings)
-								|  по 
-								= bonus.workerBonus.endDate.toLocaleString('ru-RU', birthDayFormatSettings)
+								.input-group
+									.input-group-addon С
+									input.form-control(type='datetime-local', name='startDate', required)
+									.input-group-addon По
+									input.form-control(type='datetime-local', name='endDate', required)
+								button.btn.btn-primary(type='submit') Добавить

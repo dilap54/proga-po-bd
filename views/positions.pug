@@ -5,8 +5,13 @@ block title
 block content
 	.container-fluid
 		.row
-			.col
+			.col-sm-4.mt-3
 				h2 Должности
+			.col-sm-8.mt-3
+				form.form-inline(action='')
+					input.form-control(type='text', name='search', value=search)
+					span.input-group-btn
+						button.btn.btn-primary(type='submit') Поиск
 		.row
 			.col
 				table.table

@@ -1,0 +1,58 @@
+extends ./layout
+
+block title
+	title= 'Бонус '+bonus.name
+block content
+	.container-fluid
+		.row
+			.col
+				a(href='/bonuses/') Все бонусы
+				h3= bonus.name + (bonus.deleted?' (удален)':'')
+		.row
+			.col
+				b ID: 
+				=bonus.bonusId
+				br
+				b Название: 
+				=bonus.name
+				br
+				b Описание: 
+				=bonus.description
+			.col
+				form(method='POST')
+					if (bonus.deleted)
+						button.btn.btn-primary(type='submit', formaction='/bonus/'+bonus.bonusId+'/undelete') Восстановить
+					else
+						button.btn.btn-primary(type='submit', formaction='/bonus/'+bonus.bonusId+'/delete') Запретить выдачу
+		.row.mt-4
+			.col
+				h3 Сотрудники с этим бонусом
+				- var firedWorkers = bonus.workers.filter((worker)=>{return worker.isFired});
+				- var nonFiredWorkers = bonus.workers.filter((worker)=>{return !worker.isFired});
+				table.table
+					thead
+						tr
+							th ФИО
+							th Дата рождения
+							th Пол
+							th {pen}
+					tbody
+						each worker in nonFiredWorkers
+							tr
+								td=worker['fullName']
+								td=worker['birthDay'].toLocaleString('ru-RU', birthDayFormatSettings)
+								td=(worker['gender']) ? 'ж' : 'м'
+								td
+									a(href='/worker/'+worker.workerId)
+										img(src='/img/pen.svg' height='16px')
+						if firedWorkers.length>0
+							tr
+								th(colspan=6) Уволенные
+							each worker in firedWorkers
+								tr
+									td=worker['fullName']
+									td=worker['birthDay'].toLocaleString('ru-RU', birthDayFormatSettings)
+									td=(worker['gender']) ? 'ж' : 'м'
+									td
+										a(href='/worker/'+worker.workerId)
+											img(src='/img/pen.svg' height='16px')

@@ -4,6 +4,7 @@ const bodyParser = require('body-parser')
 const cadrs = require('./cadrs.js');
 
 const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 
 const Department = require('./models/department.js');
 const Worker = require('./models/worker.js');
@@ -53,16 +54,47 @@ app.post('/generateDB', (req, res)=>{ //TODO: заменить на POST
 
 //Таблица с сотрудниками
 app.get('/workers', function(req, res){
+	var where;
+	if (req.query.search){
+		var searchString;
+		if (req.query.search.indexOf('%') !== -1){
+			searchString = req.query.search;
+		}
+		else{
+			searchString = '%'+req.query.search+'%';
+		}
+		where = {
+			[Op.or]:[
+				{
+					fullName:{
+						[Op.like]: searchString
+					}
+				},
+				{
+					'$position.name$': {
+						[Op.like]: searchString
+					}
+				},
+				{
+					'$position.department.name$': {
+						[Op.like]: searchString
+					}
+				}
+			]
+		}
+	};
 	Worker.findAll({
 		include: [
 			{
 				model: Position,
 				include:[Department]
 			}
-		]
+		],
+		where:where
 	}).then((workers)=>{
 		var data= {
-			workers: workers
+			workers: workers,
+			search: req.query.search
 		};
 		res.render('workers', data);
 	}).catch((err)=>{
@@ -156,27 +188,37 @@ app.get('/worker/(:workerId)/change', (req, res)=>{
 			{
 				model: Bonus,
 				through:{
-					attributes: ['startDate', 'endDate']
+					attributes: ['workerBonusId','startDate', 'endDate']
 				}
 			}
 		]
 	}).then((worker)=>{
 		if (worker){
-			Department.findAll({
-				where:{
-					abolished: false
-				},
-				include: {
-					model: Position,
-					where: {
+			Promise.all([
+				Department.findAll({
+					where:{
 						abolished: false
+					},
+					include: {
+						model: Position,
+						where: {
+							abolished: false
+						}
 					}
-				}
-			}).then((departments)=>{
+				}),
+				Bonus.findAll({
+					where:{
+						deleted: false
+					}
+				})
+			]).then((values)=>{
+				var departments = values[0];
+				var bonuses = values[1];
 				var data = {
 					worker: worker,
-					departments: departments
-				}
+					departments: departments,
+					bonuses: bonuses
+				};
 				res.render('workerChange', data);
 			}).catch((err)=>{
 				console.error(err);
@@ -252,11 +294,87 @@ app.post('/worker/(:workerId)', (req, res)=>{
 	})
 })
 
+app.post('/worker/bonus/(:workerBonusId)', (req, res)=>{
+	if (!(req.body.startDate && req.body.endDate)){
+		console.log(401);
+		res.status(401).end();
+		return;
+	}
+	var workerBonusPromise;
+	if (req.params.workerBonusId == 'new'){
+		if (!(req.body.bonusId && req.body.workerId)){
+			console.log(401);
+			res.status(401).end();
+			return;
+		}
+		else{
+			workerBonusPromise = WorkerBonus.create({
+				workerId: parseInt(req.body.workerId),
+				bonusId: req.body.bonusId,
+				startDate: req.body.startDate,
+				endDate: req.body.endDate
+			});
+		}
+	}
+	else{
+		workerBonusPromise = WorkerBonus.findOne({
+			where:{
+				workerBonusId: req.params.workerBonusId
+			}
+		});
+	}
+	workerBonusPromise.then((workerBonus)=>{
+		if (workerBonus){
+			workerBonus.startDate = req.body.startDate;
+			workerBonus.endDate = req.body.endDate;
+			console.log('workerBonus changed', workerBonus.changed());
+			if (workerBonus.changed()){//Если новые данные отличаются от старых
+				workerBonus.createdAt = Sequelize.fn('CURRENT_TIMESTAMP');
+				workerBonus.save().then((newWorkerBonus)=>{//Сохранить новые данные в базе
+					res.redirect('/worker/'+newWorkerBonus.workerId+'/change');
+				}).catch((err)=>{
+					console.error(err);
+					res.status(500).end();
+				});
+			}
+			else{//Если новые данные не отличаются от старых
+				res.redirect('/worker/'+workerBonus.workerId+'/change');
+			}
+		}
+		else{
+			res.status(404).end('Нет такого сотрудника');
+		}
+
+	}).catch((err)=>{
+		console.error(err);
+		res.status(500).end();
+	})
+})
+
+
 //Таблица отделов
 app.get('/departments', (req, res)=>{
-	Department.findAll().then((departments)=>{
+	var where;
+	if (req.query.search){
+		var searchString;
+		if (req.query.search.indexOf('%') !== -1){
+			searchString = req.query.search;
+		}
+		else{
+			searchString = '%'+req.query.search+'%';
+		}
+		where = {
+			name:{
+				[Op.like]: searchString
+			}
+		}
+	};
+	Department.findAll({
+		where: where
+	}).then((departments)=>{
 		var data = {
 			departments: departments,
+			search: req.query.search
 		};
 		res.render('departments', data);
 	}).catch((err)=>{
@@ -370,11 +488,37 @@ app.post('/department/new', (req, res)=>{
 });
 
 app.get('/positions', (req, res)=>{
+	var where;
+	if (req.query.search){
+		var searchString;
+		if (req.query.search.indexOf('%') !== -1){
+			searchString = req.query.search;
+		}
+		else{
+			searchString = '%'+req.query.search+'%';
+		}
+		where = {
+			[Op.or]:[
+				{
+					name:{
+						[Op.like]: searchString
+					}
+				},
+				{
+					'$department.name$': {
+						[Op.like]: searchString
+					}
+				}
+			]
+		}
+	};
 	Position.findAll({
-		include: [Department]
+		include: [Department],
+		where: where
 	}).then((positions)=>{
 		var data = {
 			positions: positions,
+			search: req.query.search
 		};
 		res.render('positions', data);
 	}).catch((err)=>{
@@ -416,6 +560,64 @@ app.get('/position/(:id)', (req, res)=>{
 		console.error(err);
 		res.status(500).end();
 	});
+});
+
+//Таблица с бонусами
+app.get('/bonuses', (req, res)=>{
+	var where;
+	if (req.query.search){
+		var searchString;
+		if (req.query.search.indexOf('%') !== -1){
+			searchString = req.query.search;
+		}
+		else{
+			searchString = '%'+req.query.search+'%';
+		}
+		where = {
+			[Op.or]:[
+				{
+					name:{
+						[Op.like]: searchString
+					}
+				},
+				{
+					description: {
+						[Op.like]: searchString
+					}
+				}
+			]
+		}
+	};
+	Bonus.findAll({
+		where: where
+	}).then((bonuses)=>{
+		var data = {
+			bonuses: bonuses,
+			search: req.query.search
+		};
+		res.render('bonuses', data);
+	}).catch((err)=>{
+		console.error(err);
+		res.status(500).end();
+	});
+});
+
+//Запрос на создание должности
+app.post('/bonus/new', (req, res)=>{
+	if (req.body.name && req.body.description){
+		Bonus.create({
+			name: req.body.name,
+			description: req.body.description
+		}).then((bonus)=>{
+			res.redirect('/bonus/'+bonus.bonusId);
+		}).catch((err)=>{
+			console.error(err);
+			res.redirect('/bonuses/');
+		})
+	}
+	else{
+		res.status(401).end('Не полные данные')
+	}
 });
 
 //Запрос на упразднение должности
@@ -482,14 +684,83 @@ app.post('/position/(:positionId)/unabolishe', (req, res)=>{
 	});
 });
 
-//Таблица с бонусами
-app.get('/bonuses', (req, res)=>{
-	Bonus.findAll().then((bonuses)=>{
+//Описание бонуса
+app.get('/bonus/(:bonusId)', (req, res)=>{
+	Bonus.findOne({
+		where:{
+			bonusId: req.params.bonusId
+		},
+		include:[Worker]
+	}).then((bonus)=>{
 		var data = {
-			bonuses: bonuses,
+			bonus: bonus
 		};
-		res.render('bonuses', data);
+		res.render('bonus', data);
 	}).catch((err)=>{
+		console.error(err);
+		res.status(500).end();
+	});
+});
+
+//Запрос на удаление бонуса
+app.post('/bonus/(:bonusId)/delete', (req, res)=>{
+	Bonus.findOne({
+		where:{
+			bonusId: req.params.bonusId
+		}
+	}).then((bonus)=>{
+		if (bonus){//Если bonus найден в базе
+			return bonus.update({//Вернуть promise обновления должности
+				deleted: true
+			});
+		}
+		else{//Если bonus не найден в базе
+			throw 'bonus not found';
+		}
+	}).then(
+		(bonus)=>{//Если bonus найден в базе
+			var data = {
+				bonus: bonus
+			}
+			res.redirect('/bonus/'+bonus.bonusId);
+		},
+		(err)=>{//Если bonus не найден в базе
+			console.error(err);
+			res.status(404).end('Нет такой должности');
+		}
+	).catch((err)=>{
+		console.error(err);
+		res.status(500).end();
+	});
+});
+
+//Запрос на восстановление бонуса
+app.post('/bonus/(:bonusId)/undelete', (req, res)=>{
+	Bonus.findOne({
+		where:{
+			bonusId: req.params.bonusId
+		}
+	}).then((bonus)=>{
+		if (bonus){//Если bonus найден в базе
+			return bonus.update({//Вернуть promise обновления должности
+				deleted: false
+			});
+		}
+		else{//Если bonus не найден в базе
+			throw 'bonus not found';
+		}
+	}).then(
+		(bonus)=>{//Если bonus найден в базе
+			var data = {
+				bonus: bonus
+			}
+			res.redirect('/bonus/'+bonus.bonusId);
+		},
+		(err)=>{//Если bonus не найден в базе
+			console.error(err);
+			res.status(404).end('Нет такой должности');
+		}
+	).catch((err)=>{
 		console.error(err);
 		res.status(500).end();
 	});

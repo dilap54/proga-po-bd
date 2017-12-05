@@ -37,10 +37,10 @@ block content
 						a(href='/department/'+worker.position.department.departmentId)= worker.position.department.name
 					.col
 						b Бонусы:
-						br
 						each bonus in worker.bonus
-							i= bonus.name
 							br
+							a(href='/bonus/'+bonus.bonusId)
+								i= bonus.name
 							|  с 
 							= bonus.workerBonus.startDate.toLocaleString('ru-RU', birthDayFormatSettings)
 							|  по 

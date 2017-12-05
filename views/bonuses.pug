@@ -5,8 +5,15 @@ block title
 block content
 	.container-fluid
 		.row
-			.col
+			.col-sm-4.mt-3
 				h2 Бонусы
+			.col-sm-8.mt-3
+				form.form-inline(action='')
+					input.form-control(type='text', name='search', value=search)
+					span.input-group-btn
+						button.btn.btn-primary(type='submit') Поиск
+		.row
+			.col
 				table.table
 					thead
 						tr
@@ -15,9 +22,18 @@ block content
 							th Описание
 							th {pen}
 					tbody
-						- var abolished = bonuses.filter((item)=>{return item.deleted});
-						- var nonAbolished = bonuses.filter((item)=>{return !item.deleted});
-						each bonus in nonAbolished
+						- var deletedBonuses = bonuses.filter((item)=>{return item.deleted});
+						- var nondeletedBonuses = bonuses.filter((item)=>{return !item.deleted});
+						tr
+							form.mb-0(action='/bonus/new', method='POST')
+								td +
+								td
+									input.form-control(name='name' required)
+								td
+									input.form-control(name='description' required)
+								td
+									button.btn.btn-primary(type='submit') Добавить
+						each bonus in nondeletedBonuses
 							tr
 								td=bonus.bonusId
 								td=bonus.name
@@ -26,10 +42,11 @@ block content
 									a(href='/bonus/'+bonus.bonusId)
 										img(src='/img/pen.svg', height='20px')
 
-						if abolished.length>0
+						if deletedBonuses.length>0
 							tr
-								td(colspan=2) Упраздненные
-							each bonus in abolished
+								td(colspan=4) 
+									b Отключенные
+							each bonus in deletedBonuses
 								tr
 									td=bonus.bonusId
 									td=bonus.name
