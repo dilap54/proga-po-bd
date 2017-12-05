@@ -9,7 +9,7 @@ const sequelize = new Sequelize('os', 'os', '123456', {
     acquire: 30000,
     idle: 10000
   },
-  logging: false
+  //logging: false
 });
 
 module.exports = sequelize;

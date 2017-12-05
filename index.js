@@ -18,7 +18,7 @@ app.set('view engine', 'pug');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static('public'));
 app.use((req, res, next)=>{
-	console.log(req.originalUrl);
+	console.log(req.ips, req.ip, req.originalUrl);
 	next();
 });
 app.use((req, res,next)=>{
@@ -28,7 +28,57 @@ app.use((req, res,next)=>{
 
 
 app.get('/', (req, res)=> {
-	res.render('index');
+	Promise.all([
+		Worker.count({
+			where: { isFired: false }
+		}),
+		Worker.count({
+			where: { isFired: true	}
+		}),
+		Department.count({
+			where:{	abolished: false}
+		}),
+		Department.count({
+			where:{	abolished: true }
+		}),
+		Position.count({
+			where:{	abolished: false}
+		}),
+		Position.count({
+			where:{	abolished: true }
+		}),
+		Bonus.count({
+			where:{ deleted: false  }
+		}),
+		Bonus.count({
+			where:{ deleted: true  }
+		})
+	]).then((values)=>{
+		var data = {
+			count:{
+				workers: {
+					nonfired: values[0],
+					fired: values[1]
+				},
+				departments: {
+					nonabolished: values[2],
+					abolished: values[3]
+				},
+				positions: {
+					nonabolished: values[4],
+					abolished: values[5]
+				},
+				bonuses: {
+					nondeleted: values[6],
+					deleted: values[7]
+				}
+			}
+		};
+		res.render('index', data);
+	}).catch((err)=>{
+		console.error(err);
+		res.status(500).end(err);
+	});
 });
 
 app.post('/createDB', (req, res)=>{ //TODO: заменить на POST
@@ -99,7 +149,7 @@ app.get('/workers', function(req, res){
 		res.render('workers', data);
 	}).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	});
 });
 
@@ -122,7 +172,7 @@ app.get('/worker/new', (req, res)=>{
 		res.render('workerChange', data);
 	}).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	});
 });
 
@@ -170,7 +220,7 @@ app.get('/worker/(:workerId)', (req, res)=>{
 		}
 	}).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	})
 });
 
@@ -222,7 +272,7 @@ app.get('/worker/(:workerId)/change', (req, res)=>{
 				res.render('workerChange', data);
 			}).catch((err)=>{
 				console.error(err);
-				res.status(500).end();
+				res.status(500).end(err);
 			});
 		}
 		else{
@@ -230,7 +280,7 @@ app.get('/worker/(:workerId)/change', (req, res)=>{
 		}
 	}).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	})
 });
 
@@ -239,7 +289,7 @@ app.post('/worker/(:workerId)', (req, res)=>{
 	//Проверка входных данных
 	if (!(req.body.fullName && req.body.birthDay && req.body.gender && req.body.isFired && req.body.positionId)){//Если не все данные на месте
 		console.log(401);
-		res.status(401).end();
+		res.status(401).end(401);
 		return;
 	}
 	//Создание instans'а worker'а
@@ -271,7 +321,7 @@ app.post('/worker/(:workerId)', (req, res)=>{
 					res.redirect('/worker/'+newWorker.workerId);
 				}).catch((err)=>{
 					console.error(err);
-					res.status(500).end();
+					res.status(500).end(err);
 				});
 				if (req.params.workerId != 'new'){
 					WorkerHistory.create(oldWorker).then((data)=>{
@@ -290,21 +340,21 @@ app.post('/worker/(:workerId)', (req, res)=>{
 		}
 	}).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	})
 })
 
 app.post('/worker/bonus/(:workerBonusId)', (req, res)=>{
 	if (!(req.body.startDate && req.body.endDate)){
 		console.log(401);
-		res.status(401).end();
+		res.status(401).end(401);
 		return;
 	}
 	var workerBonusPromise;
 	if (req.params.workerBonusId == 'new'){
 		if (!(req.body.bonusId && req.body.workerId)){
 			console.log(401);
-			res.status(401).end();
+			res.status(401).end(401);
 			return;
 		}
 		else{
@@ -334,7 +384,7 @@ app.post('/worker/bonus/(:workerBonusId)', (req, res)=>{
 					res.redirect('/worker/'+newWorkerBonus.workerId+'/change');
 				}).catch((err)=>{
 					console.error(err);
-					res.status(500).end();
+					res.status(500).end(err);
 				});
 			}
 			else{//Если новые данные не отличаются от старых
@@ -347,7 +397,7 @@ app.post('/worker/bonus/(:workerBonusId)', (req, res)=>{
 
 	}).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	})
 })
 
@@ -370,16 +420,40 @@ app.get('/departments', (req, res)=>{
 		}
 	};
 	Department.findAll({
+		attributes:{
+			include:[
+				[Sequelize.fn('COUNT', Sequelize.col('positions.positionId')),'positionsCount'],
+				//[Sequelize.fn('COUNT', Sequelize.col('positions->workers.workerId')),'workersCount']
+			]
+		},
+		include:[
+			{
+				model: Position,
+				attributes:	[]				
+			},
+			/*
+			{
+				model: Worker,
+				attributes: [
+					[Sequelize.fn('COUNT', Sequelize.col('worker.workerId')),'workersCount']
+				],
+				separate: true,
+				group: ['worker.positionId'],
+			}
+			*/
+		],
+		group: ['department.departmentId'],
 		where: where
 	}).then((departments)=>{
+		console.log(departments[0].get());
 		var data = {
-			departments: departments,
+			departments: departments.map((item)=>{return item.get()}),
 			search: req.query.search
 		};
 		res.render('departments', data);
 	}).catch((err)=>{
 		console.error('department.findAll error', err);
-		res.status(500).end();
+		res.status(500).end(err);
 	})
 });
 
@@ -402,7 +476,7 @@ app.get('/department/(:departmentId)', (req, res)=>{
 		}
 	}).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	})
 });
 
@@ -434,7 +508,7 @@ app.post('/department/(:departmentId)/abolishe', (req, res)=>{
 		}
 	).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	});
 });
 
@@ -466,7 +540,7 @@ app.post('/department/(:departmentId)/unabolishe', (req, res)=>{
 		}
 	).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	});
 });
 
@@ -523,7 +597,7 @@ app.get('/positions', (req, res)=>{
 		res.render('positions', data);
 	}).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	});
 });
 
@@ -558,7 +632,7 @@ app.get('/position/(:id)', (req, res)=>{
 		res.render('position', data);
 	}).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	});
 });
 
@@ -598,7 +672,7 @@ app.get('/bonuses', (req, res)=>{
 		res.render('bonuses', data);
 	}).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	});
 });
 
@@ -648,7 +722,7 @@ app.post('/position/(:positionId)/abolishe', (req, res)=>{
 		}
 	).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	});
 });
 
@@ -680,7 +754,7 @@ app.post('/position/(:positionId)/unabolishe', (req, res)=>{
 		}
 	).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	});
 });
 
@@ -698,7 +772,7 @@ app.get('/bonus/(:bonusId)', (req, res)=>{
 		res.render('bonus', data);
 	}).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	});
 });
 
@@ -730,7 +804,7 @@ app.post('/bonus/(:bonusId)/delete', (req, res)=>{
 		}
 	).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	});
 });
 
@@ -762,7 +836,7 @@ app.post('/bonus/(:bonusId)/undelete', (req, res)=>{
 		}
 	).catch((err)=>{
 		console.error(err);
-		res.status(500).end();
+		res.status(500).end(err);
 	});
 });
 

@@ -19,6 +19,8 @@ block content
 						tr
 							th id
 							th Название
+							th Должностей
+							//th Сотрудников
 							th {pen}
 					tbody
 						- var abolished = departments.filter((department)=>{return department.abolished});
@@ -26,14 +28,16 @@ block content
 						tr
 							form.mb-0(action='/department/new', method='POST')
 								td +
-								td
+								td(colspan=2)
 									input.form-control(name='name' required)
 								td
 									button.btn.btn-primary(type='submit') Добавить
 						each department in nonAbolished
 							tr
-								td=department['departmentId']
-								td=department['name']
+								td=department.departmentId
+								td=department.name
+								td=department.positionsCount
+								//td=department.workersCount
 								td
 									a(href='/department/'+department.departmentId)
 										img(src='/img/pen.svg', height='20px')
@@ -43,8 +47,10 @@ block content
 									b Упраздненные
 							each department in abolished
 								tr
-									td=department['departmentId']
-									td=department['name']
+									td=department.departmentId
+									td=department.name
+									td=department.positionsCount
+									//td=department.workersCount
 									td
 										a(href='/department/'+department.departmentId)
 											img(src='/img/pen.svg', height='20px')

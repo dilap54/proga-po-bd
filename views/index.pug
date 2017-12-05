@@ -14,4 +14,45 @@ block content
 					.col-md-6.col-lg-4.col-xl-3.mt-2.mb-2
 						a.overview(href="/bonuses") Бонусы
 			.col-md-4
+				h3 Статистика
+				
+				h5.mt-3 Сотрудники
+				b Работающие: 
+				=count.workers.nonfired
+				br
+				b Уволенные: 
+				=count.workers.fired
+				br
+				b Всего: 
+				=count.workers.fired+count.workers.nonfired
+
+				h5.mt-3 Отделы
+				b Работающие: 
+				=count.departments.nonabolished
+				br
+				b Упраздненные: 
+				=count.departments.abolished
+				br
+				b Всего: 
+				=count.departments.abolished+count.departments.nonabolished
+
+				h5.mt-3 Должности
+				b Работающие: 
+				=count.positions.nonabolished
+				br
+				b Упраздненные: 
+				=count.positions.abolished
+				br
+				b Всего: 
+				=count.positions.abolished+count.positions.nonabolished
+
+				h5.mt-3 Бонусы
+				b Работающие: 
+				=count.bonuses.nondeleted
+				br
+				b Отключенные: 
+				=count.bonuses.deleted
+				br
+				b Всего: 
+				=count.bonuses.deleted+count.bonuses.nondeleted
 				
